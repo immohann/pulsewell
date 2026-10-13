@@ -3,6 +3,8 @@
 **Recovery, strain and sleep, computed on your device.**
 A private, local-first performance tracker. No account, no server, no tracking.
 
+**Live app: https://pulsewell-tau.vercel.app**
+
 Pulsewell turns heart rate, heart-rate variability (HRV) and sleep into three daily numbers:
 
 * **Recovery** (1–99%, green / yellow / red): how ready your body is
