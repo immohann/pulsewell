@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Btn, Card, Field, NumInput, PageHead, Title, inputCls } from "@/components/ui";
 import { fmtDay, todayStr } from "@/lib/engine";
-import WhoopCard from "@/components/WhoopCard";
+import Link from "next/link";
 import { useStore } from "@/lib/store";
 import type { Fitness, Sex, SleepGoal } from "@/lib/types";
 
@@ -83,7 +83,15 @@ export default function SettingsPage() {
         </Card>
 
         <div className="space-y-4">
-          <WhoopCard />
+          <Card>
+            <Title>Data sources</Title>
+            <p className="text-sm text-[var(--muted)]">
+              Import from Apple Health, a CSV, or a WHOOP account, or connect a heart-rate strap.
+            </p>
+            <Link href="/import" className="mt-3 inline-block text-sm text-[var(--accent)] underline">
+              Open Import data
+            </Link>
+          </Card>
           <Card>
             <Title>Cycle insights</Title>
             <label className="flex items-center justify-between text-sm">

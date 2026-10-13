@@ -137,7 +137,9 @@ export const workoutsOn = (s: StoreState, date: string): Workout[] => s.workouts
 export const dayStrain = (s: StoreState, date: string): number => {
   const ws = workoutsOn(s, date);
   const day = s.days[date];
-  const load = ws.reduce((a, w) => a + trimp(w.zoneMin), 0) + stepLoad(day?.steps);
+  // Continuous heart rate (an imported watch or phone history) already includes workouts,
+  // so it replaces the workout + steps estimate instead of adding to it.
+  const load = day?.hrZoneMin ? trimp(day.hrZoneMin) : ws.reduce((a, w) => a + trimp(w.zoneMin), 0) + stepLoad(day?.steps);
   const own = loadToStrain(load, s.profile.fitness);
   // A connected WHOOP measures heart rate all day; Pulsewell only sees workouts and steps,
   // so WHOOP's figure is the floor. Anything recorded here beyond it still counts.

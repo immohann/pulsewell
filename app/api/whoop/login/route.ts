@@ -4,7 +4,7 @@ import { AUTH_URL, SCOPES, redirectUri, stateCookie, whoopConfig } from "@/lib/w
 export function GET(req: NextRequest) {
   const origin = req.nextUrl.origin;
   const cfg = whoopConfig();
-  if (!cfg) return NextResponse.redirect(new URL("/settings?whoop=not_configured", origin));
+  if (!cfg) return NextResponse.redirect(new URL("/import?whoop=not_configured", origin));
 
   const state = crypto.randomUUID().replace(/-/g, "").slice(0, 24);
   const url = new URL(AUTH_URL);

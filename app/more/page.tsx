@@ -6,6 +6,7 @@ import { Card, PageHead } from "@/components/ui";
 import { MORE } from "@/components/Shell";
 
 const BLURB: Record<string, string> = {
+  "/import": "Apple Health, CSV files, or a WHOOP account.",
   "/journal": "Log habits and see what moves your recovery.",
   "/plan": "Weekly goals, streaks and milestones.",
   "/health": "Healthspan, cardio fitness and a printable vitals report.",

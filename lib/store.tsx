@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { demoState, emptyState } from "./demo";
 import { uid } from "./engine";
-import type { BreathSession, DayRecord, Goal, Profile, StoreState, WhoopImport, Workout } from "./types";
+import type { BreathSession, DayRecord, Goal, HealthImport, Profile, StoreState, WhoopImport, Workout } from "./types";
 
 const KEY = "pulsewell:v1";
 
@@ -22,12 +22,33 @@ interface Ctx {
   startFresh: (p: Profile) => void;
   startDemo: (p: Profile) => void;
   importWhoop: (imp: WhoopImport) => void;
+  importHealth: (imp: HealthImport) => void;
   reset: () => void;
   exportJson: () => string;
   importJson: (s: string) => string | null;
 }
 
 const StoreCtx = createContext<Ctx | null>(null);
+
+/** Merge imported days and workouts into the store. Real data replaces the synthetic demo history. */
+function mergeImport(s: StoreState, imp: HealthImport | WhoopImport, whoop: boolean): StoreState {
+  const base: StoreState = s.demo ? { ...emptyState(), onboarded: true, profile: s.profile, goals: s.goals } : s;
+  const days = { ...base.days };
+  for (const [date, patch] of Object.entries(imp.days)) {
+    const prev = days[date] ?? { date };
+    days[date] = { ...prev, ...patch, date, ...(patch.whoop || prev.whoop ? { whoop: { ...prev.whoop, ...patch.whoop } } : {}) };
+  }
+  const ids = new Set(imp.workouts.map((w) => w.id));
+  const workouts = [...base.workouts.filter((w) => !ids.has(w.id)), ...imp.workouts];
+  const profile = { ...base.profile };
+  const w = imp as WhoopImport;
+  if (w.body?.heightCm) profile.heightCm = w.body.heightCm;
+  if (w.body?.weightKg) profile.weightKg = w.body.weightKg;
+  if (w.body?.maxHr) profile.maxHr = w.body.maxHr;
+  if (!profile.name && w.firstName) profile.name = w.firstName;
+  const stamp = new Date().toISOString();
+  return { ...base, days, workouts, profile, demo: false, onboarded: true, ...(whoop ? { whoopSyncedAt: stamp } : {}) };
+}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<StoreState>(emptyState);
@@ -79,25 +100,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const removeCycleStart = useCallback((d: string) => setState((s) => ({ ...s, cycleStarts: s.cycleStarts.filter((x) => x !== d) })), []);
   const startFresh = useCallback((p: Profile) => setState({ ...emptyState(), onboarded: true, profile: p }), []);
   const startDemo = useCallback((p: Profile) => setState(demoState(p)), []);
-  const importWhoop = useCallback((imp: WhoopImport) => {
-    setState((s) => {
-      // real data replaces the synthetic demo history instead of mixing with it
-      const base: StoreState = s.demo ? { ...emptyState(), onboarded: true, profile: s.profile, goals: s.goals } : s;
-      const days = { ...base.days };
-      for (const [date, patch] of Object.entries(imp.days)) {
-        const prev = days[date] ?? { date };
-        days[date] = { ...prev, ...patch, date, whoop: { ...prev.whoop, ...patch.whoop } };
-      }
-      const ids = new Set(imp.workouts.map((w) => w.id));
-      const workouts = [...base.workouts.filter((w) => !ids.has(w.id)), ...imp.workouts];
-      const profile = { ...base.profile };
-      if (imp.body?.heightCm) profile.heightCm = imp.body.heightCm;
-      if (imp.body?.weightKg) profile.weightKg = imp.body.weightKg;
-      if (imp.body?.maxHr) profile.maxHr = imp.body.maxHr;
-      if (!profile.name && imp.firstName) profile.name = imp.firstName;
-      return { ...base, days, workouts, profile, demo: false, onboarded: true, whoopSyncedAt: new Date().toISOString() };
-    });
-  }, []);
+  const importWhoop = useCallback((imp: WhoopImport) => setState((s) => mergeImport(s, imp, true)), []);
+  const importHealth = useCallback((imp: HealthImport) => setState((s) => mergeImport(s, imp, false)), []);
   const reset = useCallback(() => setState(emptyState()), []);
   const exportJson = useCallback(() => JSON.stringify(state, null, 2), [state]);
   const importJson = useCallback((text: string) => {
@@ -112,8 +116,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Ctx>(
-    () => ({ state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, reset, exportJson, importJson }),
-    [state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, reset, exportJson, importJson],
+    () => ({ state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, importHealth, reset, exportJson, importJson }),
+    [state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, importHealth, reset, exportJson, importJson],
   );
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }

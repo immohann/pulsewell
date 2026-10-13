@@ -4,7 +4,7 @@ import { COOKIE_STATE, clearTokenCookies, exchangeCode, redirectUri, setTokenCoo
 export async function GET(req: NextRequest) {
   const origin = req.nextUrl.origin;
   const back = (flag: string) => {
-    const res = NextResponse.redirect(new URL(`/settings?whoop=${flag}`, origin));
+    const res = NextResponse.redirect(new URL(`/import?whoop=${flag}`, origin));
     res.cookies.set(COOKIE_STATE, "", { path: "/api/whoop", maxAge: 0 });
     return res;
   };

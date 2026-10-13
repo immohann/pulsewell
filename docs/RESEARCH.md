@@ -1,6 +1,6 @@
 # Pulsewell research log (living document)
 
-> **Status:** v0.2 · last updated 2026-10-12
+> **Status:** v0.3 · last updated 2026-10-12
 > This file records what we learned about the category-defining "strap + app" recovery products, how we learned it, and what Pulsewell does about it. It is updated whenever the research or the feature set changes.
 
 ## 1. Ground rules (clean-room policy)
@@ -128,6 +128,21 @@ Mapping notes (see `lib/whoop-map.ts`, covered by `test/whoop-map.test.mjs`):
 
 Deliberately **not** done: speaking the strap's private BLE protocol (history sync, firmware, proprietary commands). It is unofficial, can interfere with the user's device and account, and is against the clean-room policy above.
 
+## 6c. Data sources that need no subscription (added 2026-10-12)
+
+The goal is a free product, so the primary inputs are things people already own. WHOOP is an optional extra.
+
+| Source | How | Notes |
+|---|---|---|
+| **Apple Health export** | `lib/applehealth.ts` streams `export.xml` (directly or from inside `export.zip` via fflate), scanning opening tags only, never building a DOM | Records used: resting HR, HRV (SDNN), respiratory rate, SpO₂, steps, heart rate, sleep analysis (core/deep/REM/awake/in-bed), workouts. Steps from several sources are not summed (largest source wins). Sleep nights are clustered per source with a 2 h gap rule and the best-staged source wins. Heart rate is binned per minute: it gives hourly means (Stress) and time-weighted all-day zone minutes (Strain). Workouts are scored from the HR inside them; those without HR are dropped. Tested with chunk sizes down to 7 characters |
+| **CSV** | `lib/csvimport.ts` | One row per day; stage minutes estimated when absent |
+| **BLE heart-rate strap** | Web Bluetooth Heart Rate Service | Live workouts, 2-minute morning RHR/HRV |
+| **Manual entry** | Today screen | |
+
+Design notes: imports merge into the local store by date (a repeat import refreshes it); real data replaces synthetic demo data. When a day carries all-day heart-rate zones, Strain uses them instead of the workout+steps estimate (they already include workouts). HRV from Apple is SDNN, not RMSSD; because Recovery is a z-score against the user's own history the scale difference doesn't matter, but the healthspan "typical for age" comparison is approximate for those users.
+
+Verified: unit tests (25 in total) and an end-to-end browser run importing a synthetic 46-day export as `.zip` (with decoy `export_cda.xml` and GPX entries), as bare `.xml`, a CSV with a bad row, and a junk file.
+
 ## 7. Known limitations
 
 * No proprietary strap data. Heart rate comes from HR Broadcast or any standard BLE HR monitor (Chrome/Edge/Android), WHOOP's API summaries, or manual entry.
@@ -150,5 +165,6 @@ Deliberately **not** done: speaking the strap's private BLE protocol (history sy
 
 | Date | Change |
 |---|---|
+| 2026-10-12 | Added subscription-free imports: Apple Health (streaming, zip/xml), CSV; Import data page; WHOOP moved to optional |
 | 2026-10-12 | Added WHOOP connection: official OAuth + sync proxy, HR Broadcast guidance, reference-score strip, mapping tests |
 | 2026-10-12 | Research complete (public docs + static APK analysis). v0.1 shipped: Today, Sleep, Strain, Stress, Trends, Journal, Weekly Plan, Health, Coach, Live strap, Settings, PWA manifest |

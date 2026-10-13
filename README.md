@@ -1,7 +1,7 @@
 # Pulsewell
 
-**Recovery, strain and sleep, computed on your device.**
-A private, local-first performance tracker. No account, no server, no tracking.
+**Recovery, strain and sleep, computed on your device. No subscription, no special hardware.**
+A private, local-first performance tracker that works with the data you already have: an Apple Watch or iPhone (Apple Health export), any other device that can export a CSV, a cheap Bluetooth heart-rate strap, or manual entry.
 
 **Live app: https://pulsewell-tau.vercel.app**
 
@@ -25,7 +25,7 @@ Pulsewell turns heart rate, heart-rate variability (HRV) and sleep into three da
 | **Health** | Healthspan / pace-of-aging estimate, VO₂ max estimate, printable **health monitor** report |
 | **Coach** | Ask questions about your own data. Answered on-device, rule-based |
 | **Live strap** | Connect any Bluetooth heart-rate monitor (including a WHOOP strap with HR Broadcast on): record workouts live, or take a 2-minute morning HRV/RHR reading |
-| **WHOOP connection** | Sign in with WHOOP's official API to import your real sleep, recovery, strain and workouts (read-only) |
+| **Import data** | Apple Health `export.zip` (read in your browser, never uploaded), any CSV, or optionally a WHOOP account |
 | **Settings** | Profile, cycle tracking, JSON export/import, demo data |
 
 Installable as a PWA. Works offline after first load.
@@ -36,9 +36,19 @@ All data is stored in your browser's `localStorage`. There are no analytics. Exp
 
 If you connect a WHOOP account, a small stateless server function on this deployment holds your WHOOP client secret and talks to WHOOP's API for you. Your WHOOP tokens live in `httpOnly` cookies in your browser, and the fetched data is returned straight to your browser. The server stores nothing.
 
-## Connect your WHOOP
+## Bring your own data (no subscription needed)
 
-Two ways, both official:
+Open **Import data** (in the app's menu).
+
+**Apple Health (iPhone / Apple Watch).** In the Health app tap your picture → **Export All Health Data**, then choose the resulting `export.zip` (or `export.xml`) in Pulsewell. It is streamed and parsed inside your browser, so multi-hundred-MB exports work and nothing is uploaded. You get sleep stages, HRV, resting heart rate, respiration, SpO₂, steps, all-day heart rate (which drives Strain and the hourly Stress chart) and workouts scored from the heart rate recorded during them. With an iPhone alone you get steps and sleep estimates. Apple records HRV as SDNN; Pulsewell compares it only with your own baseline.
+
+**CSV (Garmin, Fitbit, Oura, Samsung, spreadsheets).** One row per day with any of `date, sleep_start, sleep_end, awake_min, deep_min, rem_min, hrv, rhr, resp, spo2, steps, nap_min`. The page offers a template.
+
+**Heart-rate strap.** Any Bluetooth chest strap or armband (roughly $25–50) records live workouts and a 2-minute morning HRV reading on the **Live strap** page.
+
+## Optional: a WHOOP account
+
+Only useful if you have an **active WHOOP membership** (WHOOP's developer API requires one). With one, Pulsewell can import your real data through WHOOP's official API.
 
 **1. Import your WHOOP history (official developer API, read-only).** WHOOP requires every app to be registered, so deploying your own copy needs a one-time setup:
 
@@ -55,7 +65,7 @@ Two ways, both official:
 
    For local development copy `.env.example` to `.env.local`. Setting `WHOOP_MOCK=1` there serves a fake account so you can try the sync UI without credentials (never active in production).
 
-Then open **Settings → Connect WHOOP**. Pulsewell imports sleep stages, HRV, resting heart rate, respiration, SpO₂, recovery, strain, workouts with heart-rate zones, and your body measurements, and refreshes the last week every time you open the app. WHOOP's own recovery, strain and sleep scores are shown next to Pulsewell's.
+Then open **Import data → Connect WHOOP**. Pulsewell imports sleep stages, HRV, resting heart rate, respiration, SpO₂, recovery, strain, workouts with heart-rate zones, and your body measurements, and refreshes the last week every time you open the app. WHOOP's own recovery, strain and sleep scores are shown next to Pulsewell's.
 
 **2. Live heart rate from the strap.** In the WHOOP app go to Device Settings and turn on **HR Broadcast**. The strap then appears on Pulsewell's **Live strap** page as a standard Bluetooth heart-rate monitor (Chrome or Edge on desktop or Android). It broadcasts to one device at a time.
 
@@ -85,6 +95,9 @@ components/     UI primitives, shell/navigation, onboarding, breathwork
 lib/engine.ts   Scoring: recovery, strain, sleep need/plan, stress, healthspan, journal impacts
 lib/demo.ts     Seeded synthetic data generator
 lib/ble.ts      Web Bluetooth heart-rate parsing + RMSSD
+lib/applehealth.ts  Streaming Apple Health parser (tested)
+lib/healthfile.ts   Reads export.zip/xml in chunks (fflate)
+lib/csvimport.ts    Generic daily CSV importer (tested)
 lib/whoop-*.ts  WHOOP API: pure mapping (tested), OAuth + fetch (server-only), dev mock
 app/api/whoop/  OAuth login/callback, sync proxy, status, disconnect
 lib/coach.ts    On-device rule-based coach

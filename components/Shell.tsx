@@ -16,6 +16,7 @@ const MAIN = [
   { href: "/trends", label: "Trends", icon: "chart" },
 ];
 const MORE = [
+  { href: "/import", label: "Import data", icon: "down" },
   { href: "/journal", label: "Journal", icon: "book" },
   { href: "/plan", label: "Weekly plan", icon: "cal" },
   { href: "/health", label: "Health", icon: "heart" },

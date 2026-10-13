@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test test/whoop-map.test.mjs"
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

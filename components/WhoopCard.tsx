@@ -24,7 +24,7 @@ export default function WhoopCard() {
   useEffect(() => {
     if (handled.current || !flag || !status) return;
     handled.current = true;
-    window.history.replaceState(null, "", "/settings");
+    window.history.replaceState(null, "", "/import");
     if (flag === "connected") {
       void sync(60).then((r) => setMsg(r.ok ? { tone: "ok", text: `Synced ${r.counts.sleeps} nights, ${r.counts.recoveries} recoveries and ${r.counts.workouts} workouts.` } : { tone: "bad", text: r.error }));
     }
@@ -40,7 +40,7 @@ export default function WhoopCard() {
 
   return (
     <Card>
-      <Title right={status ? <Pill color={status.connected ? "#4ade80" : "#9aa3b2"}>{status.connected ? "Connected" : "Not connected"}</Pill> : null}>WHOOP account</Title>
+      <Title right={status ? <Pill color={status.connected ? "#4ade80" : "#9aa3b2"}>{status.connected ? "Connected" : "Not connected"}</Pill> : null}>WHOOP account (needs an active WHOOP membership)</Title>
 
       {status && !status.configured ? (
         <div className="space-y-3 text-sm text-[var(--muted)]">

@@ -42,6 +42,7 @@ export interface DayRecord {
   steps?: number;
   hourlyHr?: number[]; // 24 values, bpm, optional
   napMin?: number;
+  hrZoneMin?: number[]; // all-day minutes in zones 1..5, from continuous heart rate (imports)
   whoop?: WhoopDay; // reference scores reported by a connected WHOOP account
 }
 
@@ -66,7 +67,7 @@ export interface Workout {
   zoneMin: number[]; // minutes in zones 1..5
   kcal: number;
   strain: number;
-  source: "manual" | "live" | "demo" | "whoop";
+  source: "manual" | "live" | "demo" | "whoop" | "import";
   samples?: number[];
 }
 
@@ -98,13 +99,17 @@ export interface StoreState {
   whoopSyncedAt?: string; // ISO time of the last successful WHOOP sync
 }
 
-/** Normalized result of a WHOOP sync, produced server-side and merged in the browser. */
-export interface WhoopImport {
+/** Result of importing a file or account: days to merge plus scored workouts. */
+export interface HealthImport {
   days: Record<string, Partial<DayRecord>>;
   workouts: Workout[];
+  counts: { days: number; workouts: number; sleeps: number; recoveries: number };
+}
+
+/** Normalized result of a WHOOP sync, produced server-side and merged in the browser. */
+export interface WhoopImport extends HealthImport {
   body?: { heightCm?: number; weightKg?: number; maxHr?: number };
   firstName?: string;
-  counts: { days: number; workouts: number; sleeps: number; recoveries: number };
 }
 
 export type Zone = "green" | "yellow" | "red";

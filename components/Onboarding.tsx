@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Btn, Field, NumInput, inputCls } from "./ui";
 import { defaultProfile } from "@/lib/demo";
@@ -16,6 +17,7 @@ const FITNESS: { v: Fitness; label: string }[] = [
 ];
 
 export default function Onboarding() {
+  const router = useRouter();
   const { startFresh, startDemo } = useStore();
   const [p, setP] = useState<Profile>(defaultProfile());
   const [step, setStep] = useState(0);
@@ -114,17 +116,13 @@ export default function Onboarding() {
           <button
             onClick={() => {
               startFresh(p);
-              // give the store a moment to persist the profile before leaving for WHOOP
-              setTimeout(() => {
-                // API route: needs a full navigation, not client-side routing
-                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-                window.location.href = "/api/whoop/login";
-              }, 400);
+              // let the store persist the profile before leaving the page
+              setTimeout(() => router.push("/import"), 300);
             }}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]"
           >
-            <div className="font-semibold">Connect my WHOOP</div>
-            <div className="mt-1 text-sm text-[var(--muted)]">Import your real sleep, recovery, strain and workouts through WHOOP&apos;s official API (read-only).</div>
+            <div className="font-semibold">Import my data</div>
+            <div className="mt-1 text-sm text-[var(--muted)]">Apple Health export, a CSV from another device, or a heart-rate strap.</div>
           </button>
           <button onClick={() => startFresh(p)} className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]">
             <div className="font-semibold">Start fresh</div>
