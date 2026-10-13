@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Btn, Card, Field, NumInput, PageHead, Title, inputCls } from "@/components/ui";
 import { fmtDay, todayStr } from "@/lib/engine";
+import WhoopCard from "@/components/WhoopCard";
 import { useStore } from "@/lib/store";
 import type { Fitness, Sex, SleepGoal } from "@/lib/types";
 
@@ -82,6 +83,7 @@ export default function SettingsPage() {
         </Card>
 
         <div className="space-y-4">
+          <WhoopCard />
           <Card>
             <Title>Cycle insights</Title>
             <label className="flex items-center justify-between text-sm">

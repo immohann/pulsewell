@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import Icon from "./Icon";
 import Onboarding from "./Onboarding";
+import WhoopAutoSync from "./WhoopAutoSync";
 import { useStore } from "@/lib/store";
 
 const MAIN = [
@@ -51,6 +52,7 @@ export default function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl">
+      <WhoopAutoSync />
       <aside className="no-print sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r border-white/[0.06] p-5 md:flex">
         <div className="mb-6">
           <Logo />

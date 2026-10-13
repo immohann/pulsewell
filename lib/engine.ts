@@ -138,7 +138,11 @@ export const dayStrain = (s: StoreState, date: string): number => {
   const ws = workoutsOn(s, date);
   const day = s.days[date];
   const load = ws.reduce((a, w) => a + trimp(w.zoneMin), 0) + stepLoad(day?.steps);
-  return loadToStrain(load, s.profile.fitness);
+  const own = loadToStrain(load, s.profile.fitness);
+  // A connected WHOOP measures heart rate all day; Pulsewell only sees workouts and steps,
+  // so WHOOP's figure is the floor. Anything recorded here beyond it still counts.
+  const reported = day?.whoop?.strain;
+  return reported != null ? Math.max(own, reported) : own;
 };
 
 export const dayKcal = (s: StoreState, date: string): number => {

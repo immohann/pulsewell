@@ -1,6 +1,6 @@
 # Pulsewell research log (living document)
 
-> **Status:** v0.1 · last updated 2026-10-12
+> **Status:** v0.2 · last updated 2026-10-12
 > This file records what we learned about the category-defining "strap + app" recovery products, how we learned it, and what Pulsewell does about it. It is updated whenever the research or the feature set changes.
 
 ## 1. Ground rules (clean-room policy)
@@ -110,9 +110,29 @@ Pulsewell takes the *interface idea* (HR + profile + fitness level → score + e
 
 All of these are **wellness estimates**, not medical results, and are explained in-app.
 
+## 6b. Connecting a real WHOOP account (added 2026-10-12)
+
+Two supported, non-intrusive paths. Neither uses the proprietary strap protocol or private endpoints.
+
+| Path | How | Data |
+|---|---|---|
+| **Official developer API v2** | OAuth 2.0 authorization-code flow (`api.prod.whoop.com/oauth/oauth2/{auth,token}`), scopes `offline read:profile read:body_measurement read:cycles read:recovery read:sleep read:workout`. A stateless server proxy (`app/api/whoop/*`) keeps the client secret; tokens sit in `httpOnly` cookies scoped to `/api/whoop`; data goes straight back to the browser. | Sleep (stage summary, respiration, performance), recovery (HRV RMSSD, resting HR, SpO₂, skin temp, score), cycles (day strain, kJ), workouts (sport, zone durations, kJ), body measurements |
+| **HR Broadcast** | User turns on *HR Broadcast* in the WHOOP app (Device Settings). The strap then exposes the standard BLE Heart Rate Service (0x180D) read by the Live page. | Live heart rate and beat-to-beat intervals; one receiving device at a time |
+
+Mapping notes (see `lib/whoop-map.ts`, covered by `test/whoop-map.test.mjs`):
+
+* Day key = local calendar date of the sleep end (wake date), computed with each record's `timezone_offset`. Recovery is attached through its `sleep_id`; cycles by start date; naps accumulate on their own date.
+* Only `SCORED` records are used. WHOOP's skin temperature is absolute, so it is converted to a delta from the window mean.
+* WHOOP's reported recovery / strain / sleep performance are stored beside Pulsewell's own numbers. Pulsewell recomputes recovery and sleep from raw HRV, RHR and sleep; day strain uses WHOOP's all-day value as a floor because the API exposes no per-second heart rate.
+* Importing replaces synthetic demo data; imported workouts are de-duplicated by id (`whoop-<id>`).
+
+Deliberately **not** done: speaking the strap's private BLE protocol (history sync, firmware, proprietary commands). It is unofficial, can interfere with the user's device and account, and is against the clean-room policy above.
+
 ## 7. Known limitations
 
-* No proprietary strap data. Heart rate comes from any standard BLE HR monitor (Chrome/Edge/Android) or manual entry.
+* No proprietary strap data. Heart rate comes from HR Broadcast or any standard BLE HR monitor (Chrome/Edge/Android), WHOOP's API summaries, or manual entry.
+* WHOOP developer apps are individually registered; the one-time setup is described in the README. Apps in WHOOP's development tier may be limited to a small number of users.
+* No WHOOP steps or hourly heart rate through the API, so WHOOP-imported days have no Stress chart.
 * iOS Safari has no Web Bluetooth, so live recording is unavailable on iPhone browsers.
 * Data lives in browser storage. Clearing site data erases it. Use Settings → Export.
 * Scores are not clinically validated and will not match any other product's numbers.
@@ -130,4 +150,5 @@ All of these are **wellness estimates**, not medical results, and are explained 
 
 | Date | Change |
 |---|---|
+| 2026-10-12 | Added WHOOP connection: official OAuth + sync proxy, HR Broadcast guidance, reference-score strip, mapping tests |
 | 2026-10-12 | Research complete (public docs + static APK analysis). v0.1 shipped: Today, Sleep, Strain, Stress, Trends, Journal, Weekly Plan, Health, Coach, Live strap, Settings, PWA manifest |

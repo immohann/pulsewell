@@ -167,6 +167,10 @@ export default function LivePage() {
               Try with a simulated strap
             </Btn>
           </div>
+          <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-[var(--muted)]">
+            <div className="mb-1 font-medium text-[var(--fg)]">Using a WHOOP strap?</div>
+            Open the WHOOP app → Device Settings → turn <b>HR Broadcast</b> on. Your strap then appears here as a standard heart-rate monitor. It can broadcast to one device at a time, so disconnect other apps first. HR Broadcast is off by default and uses a little extra battery.
+          </div>
           {!bleSupported() ? <p className="mt-3 text-xs text-[var(--yellow)]">Web Bluetooth isn&apos;t available in this browser. You can still try the simulator.</p> : null}
           {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
         </Card>

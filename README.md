@@ -24,14 +24,42 @@ Pulsewell turns heart rate, heart-rate variability (HRV) and sleep into three da
 | **Weekly plan** | Goals with live progress, streaks and milestones |
 | **Health** | Healthspan / pace-of-aging estimate, VO₂ max estimate, printable **health monitor** report |
 | **Coach** | Ask questions about your own data. Answered on-device, rule-based |
-| **Live strap** | Connect any Bluetooth heart-rate monitor: record workouts live, or take a 2-minute morning HRV/RHR reading |
+| **Live strap** | Connect any Bluetooth heart-rate monitor (including a WHOOP strap with HR Broadcast on): record workouts live, or take a 2-minute morning HRV/RHR reading |
+| **WHOOP connection** | Sign in with WHOOP's official API to import your real sleep, recovery, strain and workouts (read-only) |
 | **Settings** | Profile, cycle tracking, JSON export/import, demo data |
 
 Installable as a PWA. Works offline after first load.
 
 ## Privacy
 
-All data is stored in your browser's `localStorage`. Nothing is sent to any server, and there are no analytics. Export a JSON backup from Settings at any time.
+All data is stored in your browser's `localStorage`. There are no analytics. Export a JSON backup from Settings at any time.
+
+If you connect a WHOOP account, a small stateless server function on this deployment holds your WHOOP client secret and talks to WHOOP's API for you. Your WHOOP tokens live in `httpOnly` cookies in your browser, and the fetched data is returned straight to your browser. The server stores nothing.
+
+## Connect your WHOOP
+
+Two ways, both official:
+
+**1. Import your WHOOP history (official developer API, read-only).** WHOOP requires every app to be registered, so deploying your own copy needs a one-time setup:
+
+1. Sign in at [developer-dashboard.whoop.com](https://developer-dashboard.whoop.com) and create an app.
+2. Add the redirect URI `https://<your-domain>/api/whoop/callback` (Settings in Pulsewell shows the exact value to copy).
+3. Enable scopes `offline read:profile read:body_measurement read:cycles read:recovery read:sleep read:workout`.
+4. Set the credentials on the server:
+
+   ```bash
+   vercel env add WHOOP_CLIENT_ID production
+   vercel env add WHOOP_CLIENT_SECRET production
+   vercel deploy --prod
+   ```
+
+   For local development copy `.env.example` to `.env.local`. Setting `WHOOP_MOCK=1` there serves a fake account so you can try the sync UI without credentials (never active in production).
+
+Then open **Settings → Connect WHOOP**. Pulsewell imports sleep stages, HRV, resting heart rate, respiration, SpO₂, recovery, strain, workouts with heart-rate zones, and your body measurements, and refreshes the last week every time you open the app. WHOOP's own recovery, strain and sleep scores are shown next to Pulsewell's.
+
+**2. Live heart rate from the strap.** In the WHOOP app go to Device Settings and turn on **HR Broadcast**. The strap then appears on Pulsewell's **Live strap** page as a standard Bluetooth heart-rate monitor (Chrome or Edge on desktop or Android). It broadcasts to one device at a time.
+
+WHOOP's API provides summaries, not raw second-by-second heart rate, so days imported from WHOOP have no hourly Stress chart. Strain for those days uses WHOOP's all-day figure.
 
 ## Heart-rate hardware
 
@@ -44,6 +72,7 @@ npm install
 npm run dev      # http://localhost:3000
 npm run build    # production build
 npm run lint
+npm test         # unit tests for the WHOOP data mapping
 ```
 
 Requires Node.js 20.9+ (Node 22 or 24 recommended).
@@ -56,6 +85,8 @@ components/     UI primitives, shell/navigation, onboarding, breathwork
 lib/engine.ts   Scoring: recovery, strain, sleep need/plan, stress, healthspan, journal impacts
 lib/demo.ts     Seeded synthetic data generator
 lib/ble.ts      Web Bluetooth heart-rate parsing + RMSSD
+lib/whoop-*.ts  WHOOP API: pure mapping (tested), OAuth + fetch (server-only), dev mock
+app/api/whoop/  OAuth login/callback, sync proxy, status, disconnect
 lib/coach.ts    On-device rule-based coach
 lib/store.tsx   localStorage-backed state
 docs/RESEARCH.md  Living research + design document

@@ -119,6 +119,18 @@ export default function TodayPage() {
         </Card>
       </div>
 
+      {day?.whoop && (day.whoop.recovery != null || day.whoop.strain != null || day.whoop.sleepPerformance != null) ? (
+        <Card className="mt-4">
+          <Title sub="The scores your WHOOP reported for this day, shown beside Pulsewell's own.">From your WHOOP</Title>
+          <div className="grid grid-cols-3 gap-4">
+            <Stat label="Recovery" value={day.whoop.recovery != null ? `${day.whoop.recovery}%` : "–"} sub={rec ? `Pulsewell ${rec.score}%` : undefined} />
+            <Stat label="Strain" value={day.whoop.strain ?? "–"} sub="Used for your Strain ring" />
+            <Stat label="Sleep" value={day.whoop.sleepPerformance != null ? `${day.whoop.sleepPerformance}%` : "–"} sub={slp ? `Pulsewell ${slp.performance}%` : undefined} />
+          </div>
+          <p className="mt-3 text-xs text-[var(--muted)]">Recovery and sleep differ slightly because the models differ: Pulsewell computes its own from your HRV, resting heart rate and sleep. Strain uses WHOOP&apos;s all-day measurement.</p>
+        </Card>
+      ) : null}
+
       {rec ? (
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { demoState, emptyState } from "./demo";
 import { uid } from "./engine";
-import type { BreathSession, DayRecord, Goal, Profile, StoreState, Workout } from "./types";
+import type { BreathSession, DayRecord, Goal, Profile, StoreState, WhoopImport, Workout } from "./types";
 
 const KEY = "pulsewell:v1";
 
@@ -21,6 +21,7 @@ interface Ctx {
   removeCycleStart: (d: string) => void;
   startFresh: (p: Profile) => void;
   startDemo: (p: Profile) => void;
+  importWhoop: (imp: WhoopImport) => void;
   reset: () => void;
   exportJson: () => string;
   importJson: (s: string) => string | null;
@@ -78,6 +79,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const removeCycleStart = useCallback((d: string) => setState((s) => ({ ...s, cycleStarts: s.cycleStarts.filter((x) => x !== d) })), []);
   const startFresh = useCallback((p: Profile) => setState({ ...emptyState(), onboarded: true, profile: p }), []);
   const startDemo = useCallback((p: Profile) => setState(demoState(p)), []);
+  const importWhoop = useCallback((imp: WhoopImport) => {
+    setState((s) => {
+      // real data replaces the synthetic demo history instead of mixing with it
+      const base: StoreState = s.demo ? { ...emptyState(), onboarded: true, profile: s.profile, goals: s.goals } : s;
+      const days = { ...base.days };
+      for (const [date, patch] of Object.entries(imp.days)) {
+        const prev = days[date] ?? { date };
+        days[date] = { ...prev, ...patch, date, whoop: { ...prev.whoop, ...patch.whoop } };
+      }
+      const ids = new Set(imp.workouts.map((w) => w.id));
+      const workouts = [...base.workouts.filter((w) => !ids.has(w.id)), ...imp.workouts];
+      const profile = { ...base.profile };
+      if (imp.body?.heightCm) profile.heightCm = imp.body.heightCm;
+      if (imp.body?.weightKg) profile.weightKg = imp.body.weightKg;
+      if (imp.body?.maxHr) profile.maxHr = imp.body.maxHr;
+      if (!profile.name && imp.firstName) profile.name = imp.firstName;
+      return { ...base, days, workouts, profile, demo: false, onboarded: true, whoopSyncedAt: new Date().toISOString() };
+    });
+  }, []);
   const reset = useCallback(() => setState(emptyState()), []);
   const exportJson = useCallback(() => JSON.stringify(state, null, 2), [state]);
   const importJson = useCallback((text: string) => {
@@ -92,8 +112,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Ctx>(
-    () => ({ state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, reset, exportJson, importJson }),
-    [state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, reset, exportJson, importJson],
+    () => ({ state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, reset, exportJson, importJson }),
+    [state, ready, setProfile, patchDay, addWorkout, removeWorkout, setBehavior, addBreath, setGoals, addCycleStart, removeCycleStart, startFresh, startDemo, importWhoop, reset, exportJson, importJson],
   );
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }

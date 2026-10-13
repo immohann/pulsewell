@@ -111,6 +111,21 @@ export default function Onboarding() {
             <div className="font-semibold">Explore with demo data</div>
             <div className="mt-1 text-sm text-[var(--muted)]">75 days of realistic synthetic data so every screen is alive. You can clear it anytime in Settings.</div>
           </button>
+          <button
+            onClick={() => {
+              startFresh(p);
+              // give the store a moment to persist the profile before leaving for WHOOP
+              setTimeout(() => {
+                // API route: needs a full navigation, not client-side routing
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                window.location.href = "/api/whoop/login";
+              }, 400);
+            }}
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]"
+          >
+            <div className="font-semibold">Connect my WHOOP</div>
+            <div className="mt-1 text-sm text-[var(--muted)]">Import your real sleep, recovery, strain and workouts through WHOOP&apos;s official API (read-only).</div>
+          </button>
           <button onClick={() => startFresh(p)} className="w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.06]">
             <div className="font-semibold">Start fresh</div>
             <div className="mt-1 text-sm text-[var(--muted)]">Begin with an empty history. Scores calibrate after about a week of readings.</div>

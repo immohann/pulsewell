@@ -42,6 +42,17 @@ export interface DayRecord {
   steps?: number;
   hourlyHr?: number[]; // 24 values, bpm, optional
   napMin?: number;
+  whoop?: WhoopDay; // reference scores reported by a connected WHOOP account
+}
+
+/** Scores WHOOP itself reported for a day, kept beside Pulsewell's own numbers. */
+export interface WhoopDay {
+  recovery?: number;
+  strain?: number;
+  sleepPerformance?: number;
+  kilojoule?: number;
+  avgHr?: number;
+  maxHr?: number;
 }
 
 export interface Workout {
@@ -55,7 +66,7 @@ export interface Workout {
   zoneMin: number[]; // minutes in zones 1..5
   kcal: number;
   strain: number;
-  source: "manual" | "live" | "demo";
+  source: "manual" | "live" | "demo" | "whoop";
   samples?: number[];
 }
 
@@ -84,6 +95,16 @@ export interface StoreState {
   goals: Goal[];
   cycleStarts: string[];
   demo: boolean;
+  whoopSyncedAt?: string; // ISO time of the last successful WHOOP sync
+}
+
+/** Normalized result of a WHOOP sync, produced server-side and merged in the browser. */
+export interface WhoopImport {
+  days: Record<string, Partial<DayRecord>>;
+  workouts: Workout[];
+  body?: { heightCm?: number; weightKg?: number; maxHr?: number };
+  firstName?: string;
+  counts: { days: number; workouts: number; sleeps: number; recoveries: number };
 }
 
 export type Zone = "green" | "yellow" | "red";
